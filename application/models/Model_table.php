@@ -219,6 +219,14 @@ class Model_Table extends CI_Model{
                 and ct.Tr_branchid= " . $this->session->userdata('BRANCHid') . "
                 " . ($date == null ? "" : " and ct.Tr_date < '$date'") . "
             ) as received_cash,
+
+            (
+                select ifnull(sum(cft.transfer_amount), 0) from tbl_cashtransfer cft
+                where cft.transfer_to= " . $this->session->userdata('BRANCHid') . "
+                and cft.status = 'a'
+                " . ($date == null ? "" : " and cft.transfer_date < '$date'") . "
+            ) as received_fund,
+
             (
                 select ifnull(sum(bt.amount), 0) from tbl_bank_transactions bt
                 where bt.transaction_type = 'withdraw'
@@ -292,6 +300,14 @@ class Model_Table extends CI_Model{
                 and ct.Tr_branchid= " . $this->session->userdata('BRANCHid') . "
                 " . ($date == null ? "" : " and ct.Tr_date < '$date'") . "
             ) as paid_cash,
+
+            (
+                select ifnull(sum(cft.transfer_amount), 0) from tbl_cashtransfer cft
+                where cft.transfer_from= " . $this->session->userdata('BRANCHid') . "
+                " . ($date == null ? "" : " and cft.transfer_date < '$date'") . "
+                and cft.status != 'd'
+            ) as transfer_fund,
+
             (
                 select ifnull(sum(bt.amount), 0) from tbl_bank_transactions bt
                 where bt.transaction_type = 'deposit'
@@ -329,10 +345,10 @@ class Model_Table extends CI_Model{
             
             /* total */
             (
-                select received_sales + received_customer + received_supplier + received_cash + bank_withdraw + loan_received + loan_initial_balance + invest_received + sale_asset + repair_amount
+                select received_sales + received_customer + received_supplier + received_cash + received_fund + bank_withdraw + loan_received + loan_initial_balance + invest_received + sale_asset + repair_amount
             ) as total_in,
             (
-                select paid_purchase + paid_customer + paid_supplier + paid_cash + bank_deposit + employee_payment + loan_payment + invest_payment + buy_asset
+                select paid_purchase + paid_customer + paid_supplier + paid_cash + transfer_fund + bank_deposit + employee_payment + loan_payment + invest_payment + buy_asset
             ) as total_out,
             (
                 select total_in - total_out
@@ -572,7 +588,9 @@ class Model_Table extends CI_Model{
                 select
                     ci.*,
                     (select (ci.purchase_quantity + ci.sales_return_quantity + ci.transfer_to_quantity) - (ci.sales_quantity + ci.purchase_return_quantity + ci.damage_quantity + ci.transfer_from_quantity)) as current_quantity,
+                    p.Product_SlNo,
                     p.Product_Name,
+                    p.is_serial,
                     p.Product_Code,
                     p.Product_ReOrederLevel,
                     p.Product_Purchase_Rate,

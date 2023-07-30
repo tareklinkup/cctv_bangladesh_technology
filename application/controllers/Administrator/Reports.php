@@ -633,34 +633,36 @@ class Reports extends CI_Controller {
 		{
 			$category = $this->Billing_model->select_category_by_branch($this->brunch);
 			?>
-			<select id="category"  data-placeholder="Choose a Category ....." class="chosen-select" style="width:200px">
-				<option value=""></option>		
-			<?php
+<select id="category" data-placeholder="Choose a Category ....." class="chosen-select" style="width:200px">
+    <option value=""></option>
+    <?php
 			foreach($category as $vcategory)
 			{
 			?>
-				<option value="<?php echo $vcategory->ProductCategory_SlNo; ?>"><?php echo $vcategory->ProductCategory_Name; ?></option>
-			<?php
+    <option value="<?php echo $vcategory->ProductCategory_SlNo; ?>"><?php echo $vcategory->ProductCategory_Name; ?>
+    </option>
+    <?php
 			}
 			?>
-			</select>
-			<?php
+</select>
+<?php
 		}else{
 			$products = $this->Product_model->products_by_brunch();
 			//echo "<pre>";print_r($product);exit;
 			?>
-			<select id="product"  data-placeholder="Choose a Product ....." class="chosen-select" style="width:200px">
-				<option value=""></option>		
-			<?php
+<select id="product" data-placeholder="Choose a Product ....." class="chosen-select" style="width:200px">
+    <option value=""></option>
+    <?php
 			foreach($products as $product)
 			{
 			?>
-				<option value="<?php echo $product->Product_SlNo; ?>"><?php echo $product->Product_Name; ?>-<?php echo $product->Product_Code; ?></option>
-			<?php
+    <option value="<?php echo $product->Product_SlNo; ?>">
+        <?php echo $product->Product_Name; ?>-<?php echo $product->Product_Code; ?></option>
+    <?php
 			}
 			?>
-			</select>
-			<?php
+</select>
+<?php
 		}
 	}
 	
@@ -853,18 +855,54 @@ class Reports extends CI_Controller {
             ", $this->session->userdata('BRANCHid'))->result();
 
             foreach($sales as $sale){
-                $sale->saleDetails = $this->db->query("
-                    select
-                        sd.*,
-                        (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
-                        (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
-                    from tbl_saledetails sd
-                    where sd.SaleMaster_IDNo = ?
-                ", $sale->SaleMaster_SlNo)->result();
-            }
 
-            $profits = array_reduce($sales, function($prev, $curr){ 
-                return $prev + array_reduce($curr->saleDetails, function($p, $c){
+                // $sale->saleDetails = $this->db->query("
+                //     select
+                //         sd.*,
+                //         (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
+                //         (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
+                //     from tbl_saledetails sd
+                //     where sd.SaleMaster_IDNo = ?
+                // ", $sale->SaleMaster_SlNo)->result();
+
+                $sale->saleDetailsNonSerial = $this->db->query("
+                select
+                    sd.*,
+                    p.is_serial,
+                    (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
+                    (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
+                from tbl_saledetails sd
+                left join tbl_product p on p.Product_SlNo = sd.Product_IDNo
+                where p.is_serial = 0
+                and sd.SaleMaster_IDNo = ?
+            ", $sale->SaleMaster_SlNo)->result();
+
+            $sale->serialDetails = $this->db->query("
+            select
+            ps.*,
+            p.Product_Name,
+             ps.ps_serial_number,
+             ps.purchase_rate as serial_purchase_rate,
+             sales_rate -  (select ps.purchase_rate) as profit_loss
+            from tbl_product_serial_numbers ps 
+            left join tbl_product p on p.Product_SlNo = ps.ps_prod_id
+            where ps.ps_sales_inv = ?
+            and ps.ps_s_status = 'yes'
+            GROUP BY ps.ps_serial_number
+        ", $sale->SaleMaster_InvoiceNo)->result();
+
+
+        }
+
+            $profitsNonSerail = array_reduce($sales, function($prev, $curr){ 
+                return $prev + array_reduce($curr->saleDetailsNonSerial, function($p, $c){
+                    return $p + $c->profit_loss;
+                });
+            });
+
+
+            $profitsSerail = array_reduce($sales, function($prev, $curr){ 
+                return $prev + array_reduce($curr->serialDetails, function($p, $c){
                     return $p + $c->profit_loss;
                 });
             });
@@ -956,7 +994,7 @@ class Reports extends CI_Controller {
                 ) as returned_amount
             ")->row();
 
-            $net_profit = ($profits + $total_transport_cost + $other_income_expense->income + $total_vat) - ($total_discount + $other_income_expense->returned_amount + $other_income_expense->damaged_amount + $other_income_expense->expense + $other_income_expense->employee_payment + $other_income_expense->profit_distribute + $other_income_expense->loan_interest + $other_income_expense->assets_sales_profit_loss );
+            $net_profit = ($profitsNonSerail + $profitsSerail + $total_transport_cost + $other_income_expense->income + $total_vat) - ($total_discount + $other_income_expense->returned_amount + $other_income_expense->damaged_amount + $other_income_expense->expense + $other_income_expense->employee_payment + $other_income_expense->profit_distribute + $other_income_expense->loan_interest + $other_income_expense->assets_sales_profit_loss );
 
             $statements = [
                 'assets'            => $assets,

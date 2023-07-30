@@ -219,9 +219,19 @@ class Account extends CI_Controller {
         }
 
         $transactionTypeClause = "";
+
         if(isset($data->transactionType) && $data->transactionType != '' && $data->transactionType == 'received'){
             $transactionTypeClause = " and ct.Tr_Type = 'In Cash'";
         }
+
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->transactionType == 'received'){
+            $transactionTypeClause = " and ct.AddBy = '$data->userFullName '";
+        }
+
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->transactionType == 'paid'){
+            $transactionTypeClause = " and ct.AddBy = '$data->userFullName '";
+        }
+
         if(isset($data->transactionType) && $data->transactionType != '' && $data->transactionType == 'paid'){
             $transactionTypeClause = " and ct.Tr_Type = 'Out Cash'";
         }
@@ -1013,6 +1023,11 @@ class Account extends CI_Controller {
             $accountClause = " and bt.account_id = '$data->accountId'";
         }
 
+        $accountClause = "";
+        if(isset($data->userFullName) && $data->userFullName != null){
+            $accountClause .= " and bt.saved_by = '$data->userFullName'";
+        }
+
         $dateClause = "";
         if(isset($data->dateFrom) && $data->dateFrom != '' 
         && isset($data->dateTo) && $data->dateTo != ''){
@@ -1393,6 +1408,19 @@ class Account extends CI_Controller {
             and ct.Tr_branchid = '$this->brunch'
             and ct.Tr_Type = 'In Cash'
             and ct.Tr_date between '$data->fromDate' and '$data->toDate'
+
+            UNION
+            
+            select 
+                cft.transfer_id as id,
+                cft.transfer_date as date,
+                cft.note as description,
+                cft.transfer_amount as in_amount,
+                0.00 as out_amount
+            from tbl_cashtransfer cft
+            where cft.transfer_to = '$this->brunch'
+            and cft.status = 'a'
+            and cft.transfer_date between '$data->fromDate' and '$data->toDate'
             
             UNION
             
@@ -1526,6 +1554,20 @@ class Account extends CI_Controller {
             and ct.status = 'a'
             and ct.Tr_branchid = '$this->brunch'
             and ct.Tr_date between '$data->fromDate' and '$data->toDate'
+
+
+            UNION
+            
+            select 
+                cft.transfer_id as id,
+                cft.transfer_date as date,
+                cft.note as description,
+                0.00 as in_amount,
+                cft.transfer_amount as out_amount
+            from tbl_cashtransfer cft
+            where cft.transfer_from = '$this->brunch'
+            and cft.status != 'd'
+            and cft.transfer_date between '$data->fromDate' and '$data->toDate'
             
             UNION
             

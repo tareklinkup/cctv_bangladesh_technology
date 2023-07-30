@@ -260,6 +260,16 @@ if ($module == 'dashboard' or $module == '') {
             </li>
             <?php endif; ?>
 
+            <?php if (array_search("pending_list", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+            <li class="">
+                <a href="<?php echo base_url(); ?>pending_list">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Pending List
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <?php endif; ?>
+
             <?php if (array_search("received_list", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
             <li class="">
                 <a href="<?php echo base_url(); ?>received_list">
@@ -464,7 +474,7 @@ if ($module == 'dashboard' or $module == '') {
     </li>
     <?php endif; ?>
 
-    <?php if (array_search("all_service_request", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+    <!-- <?php if (array_search("all_service_request", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
     <li class="">
         <a href="<?php echo base_url(); ?>all_service_request">
             <i class="menu-icon fa fa-th-list"></i>
@@ -472,9 +482,9 @@ if ($module == 'dashboard' or $module == '') {
         </a>
         <b class="arrow"></b>
     </li>
-    <?php endif; ?>
+    <?php endif; ?> -->
 
-    <?php if (array_search("service_approved_list", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+    <!-- <?php if (array_search("service_approved_list", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
     <li class="">
         <a href="<?php echo base_url(); ?>service_approved_list">
             <i class="menu-icon fa fa-th-list"></i>
@@ -482,9 +492,9 @@ if ($module == 'dashboard' or $module == '') {
         </a>
         <b class="arrow"></b>
     </li>
-    <?php endif; ?>
+    <?php endif; ?> -->
 
-    <?php if (array_search("transfared_service", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+    <!-- <?php if (array_search("transfared_service", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
     <li class="">
         <a href="<?php echo base_url(); ?>transfared_service">
             <i class="menu-icon fa fa-th-list"></i>
@@ -492,7 +502,7 @@ if ($module == 'dashboard' or $module == '') {
         </a>
         <b class="arrow"></b>
     </li>
-    <?php endif; ?>
+    <?php endif; ?> -->
 
     <?php if (array_search("serial_history", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
     <li class="">
@@ -848,6 +858,74 @@ if ($module == 'dashboard' or $module == '') {
         <b class="arrow"></b>
     </li>
     <?php endif; ?>
+
+
+
+    <!-----------Start-Cash Transfer Record----------------->
+    <?php if (
+			array_search("cash_transfer", $access) > -1
+			|| array_search("loan_view", $access) > -1
+			|| array_search("cash_transfer_record", $access) > -1
+			|| array_search("cash_transfer_received", $access) > -1
+			|| isset($CheckSuperAdmin) || isset($CheckAdmin)
+		) : ?>
+
+    <li class="">
+        <a href="<?php echo base_url(); ?>" class="dropdown-toggle">
+            <i class="menu-icon fa fa-file"></i>
+            <span class="menu-text"> Fund Transfer </span>
+
+            <b class="arrow fa fa-angle-down"></b>
+        </a>
+
+        <b class="arrow"></b>
+
+        <ul class="submenu">
+            <?php if (array_search("cash_transfer", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+            <li class="">
+                <a href="<?php echo base_url(); ?>cash_transfer">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Cash Transfer
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <?php endif; ?>
+
+            <?php if (array_search("cash_transfer_record", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+            <li class="">
+                <a href="<?php echo base_url(); ?>cash_transfer_record">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Cash Transfer Record
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <?php endif; ?>
+
+            <?php if (array_search("cash_transfer_pending", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+            <li class="">
+                <a href="<?php echo base_url(); ?>cash_transfer_pending">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Cash Transfer Pending
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <?php endif; ?>
+
+            <?php if (array_search("cash_transfer_received", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
+            <li class="">
+                <a href="<?php echo base_url(); ?>cash_transfer_received">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Cash Received Record
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <?php endif; ?>
+
+        </ul>
+    </li>
+    <?php endif; ?>
+
+    <!-----------End-Cash Transfer Record------------------->
 
     <?php if (array_search("customerPaymentPage", $access) > -1 || isset($CheckSuperAdmin) || isset($CheckAdmin)) : ?>
     <li class="">

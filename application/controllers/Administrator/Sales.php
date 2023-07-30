@@ -80,6 +80,34 @@ class Sales extends CI_Controller {
         echo json_encode($getServicRecord);
     }
 
+    function GetIMEIList()
+    {
+        $branch_id = $this->session->userdata("BRANCHid");
+
+        $imei = $this->db->query("SELECT
+            ps.*,
+            ps.ps_s_discount as SaleDetails_Discount,
+            ps.ps_prod_id,
+            p.*,
+            u.Unit_Name,
+            pc.ProductCategory_Name
+            FROM  tbl_product_serial_numbers as ps
+            INNER JOIN tbl_product as p 
+            ON ps.ps_prod_id = p.Product_SlNo
+            INNER JOIN tbl_unit as u 
+            ON p.Unit_ID= u.Unit_SlNo
+            INNER JOIN tbl_productcategory as pc
+            ON p.ProductCategory_ID= pc.ProductCategory_SlNo
+            WHERE ps_s_r_status='yes' OR ( ps_s_status IS NULL OR ps_s_status ='') OR  ps_s_status <>'yes' and ps_brunch_id='" . $branch_id . "'
+        ")->result();
+
+        $imei = array_map(function ($item) {
+            $item->quantity =  ['quantity' => 1];
+            return $item;
+        }, $imei);
+        echo json_encode($imei);
+    }
+
     public function getTransfaredServiceList()
     {
 
@@ -183,6 +211,7 @@ class Sales extends CI_Controller {
                 ps_serial_number 
             from tbl_product_serial_numbers 
             where ps_brunch_id = ?
+            GROUP BY ps_serial_number 
             ",[ $this->session->userdata('BRANCHid')])->result();
         echo json_encode($serialList);
     }
@@ -198,8 +227,8 @@ class Sales extends CI_Controller {
             p.Product_Name,
             b.Brunch_name,
             ifnull((
-                select warranty_month from tbl_purchasedetails 
-                where PurchaseDetails_SlNo = sn.purchase_details_id
+                select warranty from tbl_saledetails 
+                where SaleDetails_SlNo = sn.sales_details_id
             ), 0) as warranty_month,
 
             DATE_ADD(sm.SaleMaster_SaleDate, INTERVAL (select warranty_month) month ) as warranty_date
@@ -266,17 +295,22 @@ class Sales extends CI_Controller {
     }
 
     public function addSales(){
+
         $res = ['success'=>false, 'message'=>''];
+        
         try{
+
             $this->db->trans_begin();
             $data = json_decode($this->input->raw_input_stream);
             $invoice = $data->sales->invoiceNo;
             $invoiceCount = $this->db->query("select * from tbl_salesmaster where SaleMaster_InvoiceNo = ?", $invoice)->num_rows();
+
             if($invoiceCount != 0){
                 $invoice = $this->mt->generateSalesInvoice();
             }
 
             $customerId = $data->sales->customerId;
+            
             if(isset($data->customer)){
                 $customer = (array)$data->customer;
                 unset($customer['Customer_SlNo']);
@@ -346,7 +380,7 @@ class Sales extends CI_Controller {
                     'SaleDetails_Rate' => $cartProduct->salesRate,
                     'SaleDetails_Tax' => $cartProduct->vat,
                     'SaleDetails_TotalAmount' => $cartProduct->total,
-                    'warranty' => $cartProduct->warranty,
+                    'warranty' => $cartProduct->warranty ?? null,
                     'Status' => 'a',
                     'AddBy' => $this->session->userdata("FullName"),
                     'AddTime' => date('Y-m-d H:i:s'),
@@ -361,6 +395,8 @@ class Sales extends CI_Controller {
                     $serial = array( 
                         'ps_s_status'=> 'yes',
                         'ps_s_r_status'=> 'no',
+                        'sales_rate' => $cartProduct->salesRate,
+                        'ps_sales_inv' => $invoice,
                         'ps_s_r_amount'=> 0,
                         'sales_details_id'=> $salesDetailsId
                     );
@@ -512,12 +548,14 @@ class Sales extends CI_Controller {
                 where sd.SaleMaster_IDNo = ?
                 and sd.Status != 'd'
             ", $sale->SaleMaster_SlNo)->result();
+            
         }
 
         echo json_encode($sales);
     }
     
     public function getSales(){
+
         $data = json_decode($this->input->raw_input_stream);
         $branchId = $this->session->userdata("BRANCHid");
 
@@ -556,12 +594,19 @@ class Sales extends CI_Controller {
                 join tbl_productcategory pc on pc.ProductCategory_SlNo = p.ProductCategory_ID
                 join tbl_unit u on u.Unit_SlNo = p.Unit_ID
                 where sd.SaleMaster_IDNo = ?
+                
             ", $data->salesId)->result();
     
-            $saleDetails = array_map(function($saleDetail){
-                $saleDetail->serial = $this->db->query("select * from tbl_product_serial_numbers where sales_details_id=?",$saleDetail->SaleDetails_SlNo)->result();
+            // $saleDetails = array_map(function($saleDetail){
+            //     $saleDetail->serial = $this->db->query("select * from tbl_product_serial_numbers where sales_details_id=?",$saleDetail->SaleDetails_SlNo)->result();
+            //     return $saleDetail;
+            // }, $saleDetails);
+
+            $saleDetails = array_map(function ($saleDetail) {
+                $saleDetail->serial = $this->db->query("SELECT * FROM tbl_product_serial_numbers WHERE sales_details_id=? GROUP BY ps_serial_number", $saleDetail->SaleDetails_SlNo)->result();
                 return $saleDetail;
             }, $saleDetails);
+
             $res['saleDetails'] = $saleDetails;
         }
         $sales = $this->db->query("
@@ -587,17 +632,41 @@ class Sales extends CI_Controller {
         
         $res['sales'] = $sales;
 
+        // $res['saleReport'] =  $this->db->query("
+        //     select c.*, sm.SaleMaster_InvoiceNo as invoiceNo, 
+        //     sm.SaleMaster_SaleDate as saleDate, 
+        //     sn.ps_serial_number, sd.SaleDetails_Rate as saleRate,
+        //     p.Product_Name,
+        //     b.Brunch_name,
+        //     ifnull((
+        //         select warranty_month from tbl_purchasedetails 
+        //         where PurchaseDetails_SlNo = sn.purchase_details_id
+        //     ), 0) as warranty_month,
+
+        //     DATE_ADD(sm.SaleMaster_SaleDate, INTERVAL (select warranty_month) month ) as warranty_date
+        //     from  tbl_product_serial_numbers sn
+        //     left join tbl_product p on p.Product_SlNo = sn.ps_prod_id
+        //     left join tbl_saledetails sd on sd.SaleDetails_SlNo = sn.sales_details_id
+        //     left join tbl_salesmaster sm on sm.SaleMaster_SlNo = sd.SaleMaster_IDNo
+        //     left join tbl_customer c on c.Customer_SlNo = sm.SalseCustomer_IDNo
+        //     left join tbl_brunch b on b.brunch_id = sn.ps_brunch_id
+        //     where sn.ps_serial_number = ? 
+        //  ", [$data->serial])->result();
+
         echo json_encode($res);
     }
+
 
     public function updateSales(){
         $res = ['success'=>false, 'message'=>''];
         try{
             $this->db->trans_begin();
             $data = json_decode($this->input->raw_input_stream);
+
             $salesId = $data->sales->salesId;
 
-            if(isset($data->customer)){
+            if(isset($data->customer))
+            {
                 $customer = (array)$data->customer;
                 unset($customer['Customer_SlNo']);
                 unset($customer['display_name']);
@@ -642,6 +711,7 @@ class Sales extends CI_Controller {
             $this->db->query("delete from tbl_saledetails where SaleMaster_IDNo = ?", $salesId);
 
             foreach($currentSaleDetails as $product){
+
                 $this->db->query("
                     update tbl_currentinventory 
                     set sales_quantity = sales_quantity - ? 
@@ -669,7 +739,7 @@ class Sales extends CI_Controller {
                     'SaleDetails_Rate' => $cartProduct->salesRate,
                     'SaleDetails_Tax' => $cartProduct->vat,
                     'SaleDetails_TotalAmount' => $cartProduct->total,
-                    'warranty' => $cartProduct->warranty,
+                    'warranty' => $cartProduct->warranty ?? null,
                     'Status' => 'a',
                     'AddBy' => $this->session->userdata("FullName"),
                     'AddTime' => date('Y-m-d H:i:s'),
@@ -679,11 +749,16 @@ class Sales extends CI_Controller {
                 $this->db->insert('tbl_saledetails', $saleDetails);
                 $salesDetailsId = $this->db->insert_id();
 
+                // echo json_encode($cartProduct->SerialStore);
+                // return;
+
                 //update serial number
                 foreach($cartProduct->SerialStore as $value) {
                     $serial = array( 
                         'ps_s_status'=> 'yes',
-                        'ps_s_r_status'=>'no',
+                        'ps_s_r_status'=> 'no',
+                        'ps_sales_inv' => $data->sales->invoiceNo,
+                        'sales_rate' => $cartProduct->salesRate,
                         'ps_s_r_amount'=>0,
                         'sales_details_id'=>$salesDetailsId
                     );
@@ -2149,11 +2224,17 @@ class Sales extends CI_Controller {
     }
 
     public function getProfitLoss(){
+
         $data = json_decode($this->input->raw_input_stream);
 
         $customerClause = "";
         if($data->customer != null && $data->customer != ''){
-            $customerClause = " and sm.SalseCustomer_IDNo = '$data->customer'";
+            $customerClause .= " and sm.SalseCustomer_IDNo = '$data->customer'";
+        }
+
+        $userClause = "";
+        if($data->user != null && $data->user != ''){
+            $userClause .= " and sm.AddBy = '$data->user'";
         }
 
         $dateClause = "";
@@ -2172,24 +2253,105 @@ class Sales extends CI_Controller {
             join tbl_customer c on c.Customer_SlNo = sm.SalseCustomer_IDNo
             where sm.SaleMaster_branchid = ? 
             and sm.Status = 'a'
-            $customerClause $dateClause
+            $customerClause $dateClause  $userClause
         ", $this->session->userdata('BRANCHid'))->result();
 
         foreach($sales as $sale){
-            $sale->saleDetails = $this->db->query("
+            
+            // $sale->saleDetails = $this->db->query("
+            //     select
+            //         sd.*,
+            //         p.Product_Code,
+            //         p.Product_Name,
+            //         p.is_serial,
+            //         ps.ps_serial_number,
+            //         ps.purchase_rate as serial_purchase_rate,
+            //         (  ps.purchase_rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
+            //         (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
+            //     from tbl_saledetails sd 
+            //     left join tbl_product_serial_numbers ps on ps.ps_prod_id = sd.Product_IDNo
+            //     join tbl_product p on p.Product_SlNo = sd.Product_IDNo
+            //     where sd.SaleMaster_IDNo = ?
+            //     and ps.ps_s_status = 'yes'
+            //     GROUP BY sd.SaleDetails_SlNo
+                
+            // ", $sale->SaleMaster_SlNo)->result();
+
+          
+            $sale->serialDetails = $this->db->query("
+                select
+                ps.*,
+                p.Product_Name,
+                 ps.ps_serial_number,
+                 ps.purchase_rate as serial_purchase_rate,
+                 sales_rate -  (select ps.purchase_rate) as profit_lose
+                from tbl_product_serial_numbers ps 
+                left join tbl_product p on p.Product_SlNo = ps.ps_prod_id
+                where ps.ps_sales_inv = ?
+                and ps.ps_s_status = 'yes'
+                GROUP BY ps.ps_serial_number
+            ", $sale->SaleMaster_InvoiceNo)->result();
+
+
+
+            $sale->saleDetailsNonSerial = $this->db->query("
+            select
+                sd.*,
+                p.Product_Code,
+                p.Product_Name,
+                p.is_serial,
+                (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
+                (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
+            from tbl_saledetails sd 
+            join tbl_product p on p.Product_SlNo = sd.Product_IDNo
+            where sd.SaleMaster_IDNo = ?
+            and p.is_serial = 0
+            
+        ", $sale->SaleMaster_SlNo)->result();
+        }
+
+        echo json_encode($sales);
+    }
+
+      public function getProfitLossByProduct(){
+
+        $data = json_decode($this->input->raw_input_stream);
+
+        $clause = "";
+        if($data->product != null && $data->product != ''){
+            $clause .= " and sd.Product_IDNo = '$data->product'";
+        }
+
+        if($data->category != null && $data->category != ''){
+            $clause .= " and p.ProductCategory_ID = '$data->category'";
+        }
+
+        $dateClause = "";
+        if(($data->dateFrom != null && $data->dateFrom != '') && ($data->dateTo != null && $data->dateTo != '')){
+            $dateClause = " and sm.SaleMaster_SaleDate between '$data->dateFrom' and '$data->dateTo'";
+        }
+
+        $sales = $this->db->query("
                 select
                     sd.*,
                     p.Product_Code,
                     p.Product_Name,
-                    (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
-                    (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
+                    p.ProductCategory_ID,
+                    sm.SaleMaster_SaleDate,
+                    sum(sd.SaleDetails_TotalQuantity) as total_sale_qty,
+                    sum(sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as total_purcase_amount,
+                    sum(sd.SaleDetails_TotalAmount) as total_sale_amount
                 from tbl_saledetails sd 
                 join tbl_product p on p.Product_SlNo = sd.Product_IDNo
-                where sd.SaleMaster_IDNo = ?
-            ", $sale->SaleMaster_SlNo)->result();
-        }
+                left join tbl_salesmaster sm on sm.SaleMaster_SlNo = sd.SaleMaster_IDNo
+                where sd.Status = 'a'
+                and sd.SaleDetails_BranchId = ?
+                $clause $dateClause
+                GROUP BY sd.Product_IDNo
+            ", $this->sbrunch)->result();
 
-        echo json_encode($sales);
+            echo json_encode($sales);
+        
     }
 
     public function chalan($saleId){

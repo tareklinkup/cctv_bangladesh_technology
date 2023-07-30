@@ -188,6 +188,10 @@ class Products extends CI_Controller {
             $clauses .= " and p.is_service = '$data->isService'";
         }
 
+        if(isset($data->productType) && $data->productType != null && $data->productType != ''){
+            $clauses .= " and p.is_serial = '$data->productType'";
+        }
+
         $products = $this->db->query("
             select
                 p.*,
@@ -202,6 +206,42 @@ class Products extends CI_Controller {
             where p.status = 'a'
             $clauses
             order by p.Product_SlNo desc
+        ")->result();
+
+        echo json_encode($products);
+    }
+
+    public function getSalesProducts(){
+        $data = json_decode($this->input->raw_input_stream);
+
+        // $clauses = "";
+        // if(isset($data->categoryId) && $data->categoryId != ''){
+        //     $clauses .= " and p.ProductCategory_ID = '$data->categoryId'";
+        // }
+
+        // if(isset($data->isService) && $data->isService != null && $data->isService != ''){
+        //     $clauses .= " and p.is_service = '$data->isService'";
+        // }
+
+        // if(isset($data->productType) && $data->productType != null && $data->productType != ''){
+        //     $clauses .= " and p.is_serial = '$data->productType'";
+        // }
+
+        $products = $this->db->query("
+        select
+        p.*,
+        concat(p.Product_Name, ' - ', p.Product_Code) as display_text,
+        pc.ProductCategory_Name,
+        br.brand_name,
+        u.Unit_Name
+        from tbl_product p
+        left join tbl_productcategory pc on pc.ProductCategory_SlNo = p.ProductCategory_ID
+        left join tbl_saledetails sd on sd.Product_IDNo = p.Product_SlNo
+        left join tbl_brand br on br.brand_SiNo = p.brand
+        left join tbl_unit u on u.Unit_SlNo = p.Unit_ID
+        where sd.Product_IDNo = p.Product_SlNo
+        and p.status = 'a'
+        order by p.Product_SlNo desc
         ")->result();
 
         echo json_encode($products);
@@ -223,15 +263,19 @@ class Products extends CI_Controller {
 
         $stock = $this->mt->currentStock($clauses);
         $res['stock'] = $stock;
+
+
         $res['totalValue'] = array_sum(
             array_map(function($product){
                 return $product->stock_value;
             }, $stock));
 
+
         echo json_encode($res);
     }
 
     public function getTotalStock(){
+        
         $data = json_decode($this->input->raw_input_stream);
 
         $branchId = $this->session->userdata('BRANCHid');
@@ -302,6 +346,7 @@ class Products extends CI_Controller {
                     join tbl_transfermaster tm on tm.transfer_id = trd.transfer_id
                     where trd.product_id = p.Product_SlNo
                     and tm.transfer_from = '$branchId'
+                    and tm.status != 'd'
                     " . (isset($data->date) && $data->date != null ? " and tm.transfer_date <= '$data->date'" : "") . "
                 ) as transferred_from_quantity,
 
@@ -310,6 +355,7 @@ class Products extends CI_Controller {
                     join tbl_transfermaster tm on tm.transfer_id = trd.transfer_id
                     where trd.product_id = p.Product_SlNo
                     and tm.transfer_to = '$branchId'
+                    and tm.status = 'a'
                     " . (isset($data->date) && $data->date != null ? " and tm.transfer_date <= '$data->date'" : "") . "
                 ) as transferred_to_quantity,
                         
@@ -579,79 +625,82 @@ class Products extends CI_Controller {
 		$data['allproduct'] =  $allproduct = $this->Billing_model->select_Product_without_limit();
 		
 		?>
-			<br/>
-        <div class="table-responsive">
-		<table id="dynamic-table" class="table table-striped table-bordered table-hover">
-			<thead>
-				<tr>
-					<th class="center">
-						<label class="pos-rel">
-							<input type="checkbox" class="ace" />
-							<span class="lbl"></span>
-						</label>
-					</th>
-					<th>Product ID</th>
-					<th>Categoty Name</th>
-					<th>Product Name</th>
-					<th class="hidden-480">Brand</th>
+<br />
+<div class="table-responsive">
+    <table id="dynamic-table" class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th class="center">
+                    <label class="pos-rel">
+                        <input type="checkbox" class="ace" />
+                        <span class="lbl"></span>
+                    </label>
+                </th>
+                <th>Product ID</th>
+                <th>Categoty Name</th>
+                <th>Product Name</th>
+                <th class="hidden-480">Brand</th>
 
-					<th>Color</th>
-					<!--<th class="hidden-480">Purchase Rate</th>
+                <th>Color</th>
+                <!--<th class="hidden-480">Purchase Rate</th>
 					<th class="hidden-480">Sell Rate</th>--->
 
-					<th>Action</th>
-				</tr>
-			</thead>
+                <th>Action</th>
+            </tr>
+        </thead>
 
-			<tbody>
-                <?php 
+        <tbody>
+            <?php 
 				foreach($allproduct as $vallproduct)
 				{
 				?>
-                    <tr>
-								<td class="center">
-									<label class="pos-rel">
-										<input type="checkbox" class="ace" />
-										<span class="lbl"></span>
-									</label>
-								</td>
+            <tr>
+                <td class="center">
+                    <label class="pos-rel">
+                        <input type="checkbox" class="ace" />
+                        <span class="lbl"></span>
+                    </label>
+                </td>
 
-								<td>
-									<a href="#"><?php echo $vallproduct->Product_Code; ?></a>
-								</td>
-								<td><?php echo $vallproduct->ProductCategory_Name; ?></td>
-								<td class="hidden-480"><?php echo $vallproduct->Product_Name; ?></td>
-								<td><?php echo $vallproduct->brand_name; ?></td>
+                <td>
+                    <a href="#"><?php echo $vallproduct->Product_Code; ?></a>
+                </td>
+                <td><?php echo $vallproduct->ProductCategory_Name; ?></td>
+                <td class="hidden-480"><?php echo $vallproduct->Product_Name; ?></td>
+                <td><?php echo $vallproduct->brand_name; ?></td>
 
-								<td class="hidden-480">
-									<span class="label label-sm label-info arrowed arrowed-righ">
-									<?php echo $vallproduct->color_name; ?>
-									</span>
-								</td>
-								<!--<td class="hidden-480"><?php echo $vallproduct->Product_Purchase_Rate; ?></td>
+                <td class="hidden-480">
+                    <span class="label label-sm label-info arrowed arrowed-righ">
+                        <?php echo $vallproduct->color_name; ?>
+                    </span>
+                </td>
+                <!--<td class="hidden-480"><?php echo $vallproduct->Product_Purchase_Rate; ?></td>
 								<td class="hidden-480"><?php echo $vallproduct->Product_SellingPrice; ?></td>-->
 
-								<td>
-									<div class="hidden-sm hidden-xs action-buttons">
-										<span class="blue" onclick="Edit_product(<?php echo $vallproduct->Product_SlNo; ?>)" style="cursor:pointer;">
-											<i class="ace-icon fa fa-pencil bigger-130"></i>
-										</span>
+                <td>
+                    <div class="hidden-sm hidden-xs action-buttons">
+                        <span class="blue" onclick="Edit_product(<?php echo $vallproduct->Product_SlNo; ?>)"
+                            style="cursor:pointer;">
+                            <i class="ace-icon fa fa-pencil bigger-130"></i>
+                        </span>
 
-										<a class="green" href="" onclick="deleted(<?php echo $vallproduct->Product_SlNo; ?>)">
-											<i class="ace-icon fa fa-trash bigger-130 text-danger"></i>
-										</a>
+                        <a class="green" href="" onclick="deleted(<?php echo $vallproduct->Product_SlNo; ?>)">
+                            <i class="ace-icon fa fa-trash bigger-130 text-danger"></i>
+                        </a>
 
-										<a class="black" href="<?php echo base_url(); ?>Administrator/Products/barcodeGenerate/<?php echo $vallproduct->Product_SlNo; ?>" target="_blank">
-											<i class="ace-icon fa fa-barcode bigger-130"></i>
-										</a>
-									</div>
-								</td>
-							</tr>
-                <?php } ?> 
-                </tbody>    
-            </table> 
-			</div>
-		<?php
+                        <a class="black"
+                            href="<?php echo base_url(); ?>Administrator/Products/barcodeGenerate/<?php echo $vallproduct->Product_SlNo; ?>"
+                            target="_blank">
+                            <i class="ace-icon fa fa-barcode bigger-130"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+<?php
 		//echo "<pre>";print_r($data['allproduct']);exit;
 		//$this->load->view('Administrator/products/all_product', $data, TRUE);
         //$this->load->view('Administrator/index', $data);
@@ -812,6 +861,7 @@ class Products extends CI_Controller {
             where ps.ps_serial_number = ?
             and ps.ps_brunch_id = ?
             and ps.ps_p_r_status <> 'yes'
+            and ps.ps_status != 'd'
             ", [$obj->get_serial_number, $this->session->userdata('BRANCHid')]);
         echo json_encode($query->num_rows());
         
@@ -835,7 +885,8 @@ class Products extends CI_Controller {
             ON prod.Product_SlNo = sl.ps_prod_id
             WHERE sl.ps_brunch_id = ?
             AND sl.ps_status = 'a'
-            AND sl.ps_p_r_status <> 'yes' AND (sl.ps_s_status IS NULL OR sl.ps_s_status <> 'yes'  OR sl.ps_s_r_status ='yes')
+            AND sl.ps_s_status <> 'yes' 
+            AND (sl.ps_p_r_status <> 'yes'  OR sl.ps_s_r_status ='yes' OR sl.ps_dmg_status <> 'yes')
             $clauses
             ", $this->session->userdata("BRANCHid"))->result();
         echo json_encode($serials);

@@ -48,11 +48,17 @@ class Loan extends CI_Controller {
     }
 
     public function getLoanTransactions(){
+        
         $data = json_decode($this->input->raw_input_stream);
 
         $clauses = "";
+
         if(isset($data->accountId) && $data->accountId != null){
             $clauses .= " and lt.account_id = '$data->accountId'";
+        }
+
+        if(isset($data->userFullName) && $data->userFullName != null){
+            $clauses .= " and lt.saved_by = '$data->userFullName'";
         }
 
         if(isset($data->dateFrom) && $data->dateFrom != '' 

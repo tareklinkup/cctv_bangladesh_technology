@@ -759,6 +759,10 @@ class Employee extends CI_Controller
             $clauses .= " and ep.saved_by = '$data->user_id'";
         }
 
+        if(isset($data->user_id) && $data->user_id != ''){
+            $clauses .= " and ep.saved_by = '$data->user_id'";
+        }
+
         if(isset($data->month_id) && $data->month_id != ''){
             $clauses .= " and ep.month_id = '$data->month_id'";
         }

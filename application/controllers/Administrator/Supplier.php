@@ -518,6 +518,15 @@ class Supplier extends CI_Controller {
             $paymentTypeClause = " and sp.SPayment_TransactionType = 'CP'";
         }
 
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->paymentType == 'paid'){
+            $paymentTypeClause = " and sp.SPayment_Addby = '$data->userFullName'";
+        }
+
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->paymentType == 'received'){
+            $paymentTypeClause = " and sp.SPayment_Addby = '$data->userFullName'";
+        }
+
+
         $dateClause = "";
         if(isset($data->dateFrom) && $data->dateFrom != '' && isset($data->dateTo) && $data->dateTo != ''){
             $dateClause = " and sp.SPayment_date between '$data->dateFrom' and '$data->dateTo'";

@@ -35,6 +35,10 @@ class Purchase extends CI_Controller
             $clauses .= " and pm.Supplier_SlNo = '$data->supplierId'";
         }
 
+        if(isset($data->userFullName) && $data->userFullName != ''){
+            $clauses .= " and pm.AddBy = '$data->userFullName'";
+        }
+
         $purchaseIdClause = "";
         if(isset($data->purchaseId) && $data->purchaseId != null){
             $purchaseIdClause = " and pm.PurchaseMaster_SlNo = '$data->purchaseId'";
@@ -604,20 +608,20 @@ class Purchase extends CI_Controller
                     ", [$product->quantity, $product->productId, $this->session->userdata('BRANCHid')]);
                 }
 
-                // $this->db->query("update tbl_product set Product_Purchase_Rate = ?, Product_SellingPrice = ? where Product_SlNo = ?", [$product->purchaseRate, $product->salesRate, $product->productId]);
+                 $this->db->query("update tbl_product set Product_Purchase_Rate = ?, Product_SellingPrice = ? where Product_SlNo = ?", [$product->purchaseRate, $product->salesRate, $product->productId]);
 
-                $this->db->query("
-                    update tbl_product set 
-                    Product_Purchase_Rate = (((Product_Purchase_Rate * ?) + ?) / ?), 
-                    Product_SellingPrice = ? 
-                    where Product_SlNo = ?
-                ", [
-                    $previousStock,
-                    $product->total,
-                    ($previousStock + $product->quantity),
-                    $product->salesRate, 
-                    $product->productId
-                ]);
+                // $this->db->query("
+                //     update tbl_product set 
+                //     Product_Purchase_Rate = (((Product_Purchase_Rate * ?) + ?) / ?), 
+                //     Product_SellingPrice = ? 
+                //     where Product_SlNo = ?
+                // ", [
+                //     $previousStock,
+                //     $product->total,
+                //     ($previousStock + $product->quantity),
+                //     $product->salesRate, 
+                //     $product->productId
+                // ]);
             }
 
             if ($this->db->trans_status() === FALSE) {
@@ -737,12 +741,13 @@ class Purchase extends CI_Controller
                             'purchase_date'=>date('Y-m-d')
                         );
 
-                        array_push($serialArr, $data);
+                        // array_unshift($serialArr, $data);
+                        $this->db->insert("tbl_product_serial_numbers", $data);
                     }
 
-                    if(count($serialArr) > 0) {
-                        $this->db->insert_batch("tbl_product_serial_numbers", $serialArr);
-                    }
+                    // if(count($serialArr) > 0) {
+                    //     $this->db->insert_batch("tbl_product_serial_numbers", $serialArr);
+                    // }
                 }
 
                 $previousStock = $this->mt->productStock($product->productId);
@@ -1327,12 +1332,21 @@ class Purchase extends CI_Controller
                 'DamageDetails_DamageQuantity' => $data->DamageDetails_DamageQuantity,
                 'damage_rate' => $data->damage_rate,
                 'damage_amount' => $data->damage_amount,
+                'imei' => $data->imei ?? null,
                 'status' => 'a',
                 'AddBy' => $this->session->userdata("FullName"),
                 'AddTime' => date('Y-m-d H:i:s')
             );
 
             $this->db->insert('tbl_damagedetails', $damageDetails);
+            $damageDetailsId = $this->db->insert_id();
+
+            $serial = array( 
+                'ps_dmg_status'=> 'yes',
+                'ps_dmg_amount'=> 0,
+                'damage_details_id'=> $damageDetailsId
+            );
+            $this->db->where('ps_id', $data->ps_id)->update('tbl_product_serial_numbers', $serial);
 
             $this->db->query("
                 update tbl_currentinventory ci 
@@ -1386,11 +1400,21 @@ class Purchase extends CI_Controller
                 'DamageDetails_DamageQuantity' => $data->DamageDetails_DamageQuantity,
                 'damage_rate' => $data->damage_rate,
                 'damage_amount' => $data->damage_amount,
+                'imei' => $data->imei,
                 'UpdateBy' => $this->session->userdata("FullName"),
                 'UpdateTime' => date('Y-m-d H:i:s')
             );
 
             $this->db->where('Damage_SlNo', $damageId)->update('tbl_damagedetails', $damageDetails);
+
+
+            $damageDetailsId = $this->db->insert_id();
+            $serial = array( 
+                'ps_dmg_status'=> 'yes',
+                'ps_dmg_amount'=> 0,
+                'damage_details_id'=> $damageDetailsId
+            );
+            $this->db->where('ps_id', $data->ps_id)->update('tbl_product_serial_numbers', $serial);
             
             $this->db->query("
                 update tbl_currentinventory ci 
@@ -1426,6 +1450,7 @@ class Purchase extends CI_Controller
                 dd.DamageDetails_DamageQuantity,
                 dd.damage_rate,
                 dd.damage_amount,
+                dd.imei,
                 d.Damage_SlNo,
                 d.Damage_InvoiceNo,
                 d.Damage_Date,
@@ -1459,6 +1484,12 @@ class Purchase extends CI_Controller
 
             $this->db->where('Damage_SlNo', $damageId)->update('tbl_damage', ['status'=>'d']);
             $this->db->where('Damage_SlNo', $damageId)->update('tbl_damagedetails', ['status'=>'d']);
+
+            $serial = array( 
+                'ps_dmg_status'=> 'no',
+                'ps_dmg_amount'=> 0
+            );
+            $this->db->where('damage_details_id', $damageId)->update('tbl_product_serial_numbers', $serial);
 
             if ($this->db->trans_status() === FALSE) {
                 $this->db->trans_rollback();
@@ -1720,45 +1751,45 @@ class Purchase extends CI_Controller
     function select_supplier()
     {
         ?>
-        <div class="form-group">
-            <label class="col-sm-2 control-label no-padding-right" for="Supplierid"> Select Supplier </label>
-            <div class="col-sm-3">
-                <select name="Supplierid" id="Supplierid" data-placeholder="Choose a Supplier..." class="chosen-select">
-                    <option value=""></option>
-                    <?php
+<div class="form-group">
+    <label class="col-sm-2 control-label no-padding-right" for="Supplierid"> Select Supplier </label>
+    <div class="col-sm-3">
+        <select name="Supplierid" id="Supplierid" data-placeholder="Choose a Supplier..." class="chosen-select">
+            <option value=""></option>
+            <?php
                     $sql = $this->db->query("SELECT * FROM tbl_supplier where Supplier_brinchid='" . $this->brunch . "' order by Supplier_Name desc");
                     $row = $sql->result();
                     foreach ($row as $row) { ?>
-                        <option value="<?php echo $row->Supplier_SlNo; ?>"><?php echo $row->Supplier_Name; ?>
-                            (<?php echo $row->Supplier_Code; ?>)
-                        </option>
-                    <?php } ?>
-                </select>
-            </div>
-        </div>
-        <?php
+            <option value="<?php echo $row->Supplier_SlNo; ?>"><?php echo $row->Supplier_Name; ?>
+                (<?php echo $row->Supplier_Code; ?>)
+            </option>
+            <?php } ?>
+        </select>
+    </div>
+</div>
+<?php
     }
 
     function select_product()
     {
         ?>
-        <div class="form-group">
-            <label class="col-sm-2 control-label no-padding-right" for="Productid"> Select Product </label>
-            <div class="col-sm-3">
-                <select name="Productid" id="Productid" data-placeholder="Choose a Product..." class="chosen-select">
-                    <option value=""></option>
-                    <?php
+<div class="form-group">
+    <label class="col-sm-2 control-label no-padding-right" for="Productid"> Select Product </label>
+    <div class="col-sm-3">
+        <select name="Productid" id="Productid" data-placeholder="Choose a Product..." class="chosen-select">
+            <option value=""></option>
+            <?php
                     $sql = $this->db->query("SELECT * FROM tbl_product order by Product_Name desc");
                     $row = $sql->result();
                     foreach ($row as $row) { ?>
-                        <option value="<?php echo $row->Product_SlNo; ?>"><?php echo $row->Product_Name; ?>
-                            (<?php echo $row->Product_Code; ?>)
-                        </option>
-                    <?php } ?>
-                </select>
-            </div>
-        </div>
-        <?php
+            <option value="<?php echo $row->Product_SlNo; ?>"><?php echo $row->Product_Name; ?>
+                (<?php echo $row->Product_Code; ?>)
+            </option>
+            <?php } ?>
+        </select>
+    </div>
+</div>
+<?php
     }
 
     public function getPurchaseReturns() {
@@ -1871,15 +1902,22 @@ class Purchase extends CI_Controller
 
     public function checkPurchaseReturn($invoice)
     {
-        $res = ['found'=>false];
+        $res = ['found' => false];
+        $sales = ['salesFound' => false];
 
         $returnCount = $this->db->query("select * from tbl_purchasereturn where PurchaseMaster_InvoiceNo = ? and Status = 'a'", $invoice)->num_rows();
+        $serial_sales = $this->db->query("select * from tbl_product_serial_numbers ps where ps.ps_purchase_inv = ? and ps.ps_s_status = 'yes'", $invoice)->num_rows();
         
-        if($returnCount != 0) {
+        if($returnCount != 0 ) {
             $res = ['found'=>true];
+            echo json_encode($res);
         }
 
-        echo json_encode($res);
+        if($serial_sales != 0){
+             $sales = ['salesFound'=>true];
+            echo json_encode($sales);
+        }
+
     }
 
 }

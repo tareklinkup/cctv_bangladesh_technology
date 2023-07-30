@@ -219,19 +219,61 @@
             ", [$this->branchId, $month, $year])->result();
 
             foreach($sales as $sale){
-                $sale->saleDetails = $this->db->query("
+
+                $sale->saleDetailsNonSerial = $this->db->query("
                     select
                         sd.*,
+                        p.is_serial,
                         (sd.Purchase_Rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
                         (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss
                     from tbl_saledetails sd
-                    where sd.SaleMaster_IDNo = ?
+                    left join tbl_product p on p.Product_SlNo = sd.Product_IDNo
+                    where p.is_serial = 0
+                    and sd.SaleMaster_IDNo = ?
                 ", $sale->SaleMaster_SlNo)->result();
+
+                // $sale->saleDetailsSerial = $this->db->query("
+                // select
+                //     sd.*,
+                //     p.Product_Code,
+                //     p.Product_Name,
+                //     p.is_serial,
+                //     ps.ps_serial_number,
+                //     ps.purchase_rate as serial_purchase_rate,
+                //     (  ps.purchase_rate * sd.SaleDetails_TotalQuantity) as purchased_amount,
+                //     (select sd.SaleDetails_TotalAmount - purchased_amount) as profit_loss_serial
+                //     from tbl_saledetails sd 
+                //     left join tbl_product_serial_numbers ps on ps.ps_prod_id = sd.Product_IDNo
+                //     join tbl_product p on p.Product_SlNo = sd.Product_IDNo
+                //     where sd.SaleMaster_IDNo = ?
+                //     and ps.ps_s_status = 'yes'
+                //     GROUP BY sd.SaleDetails_SlNo
+                // ", $sale->SaleMaster_SlNo)->result();
+
+                $sale->serialDetails = $this->db->query("
+                select
+                ps.*,
+                p.Product_Name,
+                 ps.ps_serial_number,
+                 ps.purchase_rate as serial_purchase_rate,
+                 sales_rate -  (select ps.purchase_rate) as profit_lose
+                from tbl_product_serial_numbers ps 
+                left join tbl_product p on p.Product_SlNo = ps.ps_prod_id
+                where ps.ps_sales_inv = ?
+                and ps.ps_s_status = 'yes'
+                GROUP BY ps.ps_serial_number
+            ", $sale->SaleMaster_InvoiceNo)->result();
             }
 
-            $profits = array_reduce($sales, function($prev, $curr){ 
-                return $prev + array_reduce($curr->saleDetails, function($p, $c){
+            $profitsNonSerial = array_reduce($sales, function($prev, $curr){ 
+                return $prev + array_reduce($curr->saleDetailsNonSerial, function($p, $c){
                     return $p + $c->profit_loss;
+                });
+            });
+
+            $profitsSerial = array_reduce($sales, function($prev, $curr){ 
+                return $prev + array_reduce($curr->serialDetails, function($p, $c){
+                    return $p + $c->profit_lose;
                 });
             });
 
@@ -331,7 +373,7 @@
             ")->row();
 
             $net_profit = (
-                $profits + $total_transport_cost + 
+                 $profitsSerial + $profitsNonSerial + $total_transport_cost +
                 $other_income_expense->income + $total_vat
             ) - (
                 $total_discount + 

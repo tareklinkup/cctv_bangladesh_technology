@@ -77,7 +77,6 @@ class Service extends CI_Controller {
                     $product = array(
                         'service_invoice' => $data->service->invoice,
                         'product_name' => $product->product_name,
-                        'model' => $product->model,
                         'imei' => $product->imei,
                         'quantity' => $product->quantity,
                         'service_status' => $product->status,
@@ -693,4 +692,3 @@ class Service extends CI_Controller {
         echo json_encode($res);
     }
 }   
-

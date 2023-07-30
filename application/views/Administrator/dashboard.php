@@ -471,7 +471,7 @@ if ($module == 'dashboard' or $module == '') { ?>
 									<i class="menu-icon fa fa-list"></i>
 								</div>
 								<div class="textModule">
-									Seraila History
+									Serial History
 								</div>
 							</a>
 						</div>

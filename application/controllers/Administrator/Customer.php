@@ -57,9 +57,10 @@ class Customer extends CI_Controller
             left join tbl_district d on d.District_SlNo = c.area_ID
             where c.status = 'a'
             and c.Customer_Type != 'G'
+            and c.Customer_brunchid = ?
             $clauses
             order by c.Customer_SlNo desc
-        ")->result();
+        ", $this->cbrunch)->result();
         echo json_encode($customers);
     }
 
@@ -88,6 +89,14 @@ class Customer extends CI_Controller
         }
         if(isset($data->paymentType) && $data->paymentType != '' && $data->paymentType == 'paid'){
             $clauses .= " and cp.CPayment_TransactionType = 'CP'";
+        }
+
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->paymentType == 'paid'){
+            $clauses .= " and cp.CPayment_Addby = '$data->userFullName'";
+        }
+
+        if(isset($data->userFullName) && $data->userFullName != '' && $data->paymentType == 'received'){
+            $clauses .= " and cp.CPayment_Addby = '$data->userFullName'";
         }
 
         if(isset($data->dateFrom) && $data->dateFrom != '' && isset($data->dateTo) && $data->dateTo != ''){
@@ -212,14 +221,6 @@ class Customer extends CI_Controller
             }
 
 
-        $checkUsername = $this->db->query("select * from tbl_customer where User_Name = ?", $customerObj->User_Name)->num_rows();
-
-        if($checkUsername > 0){
-            $res = ['success'=>false, 'message'=>'Username already exists'];
-            echo json_encode($res);
-            exit;
-        }
-
             $customer = (array)$customerObj;
             unset($customer['Customer_SlNo']);
             $customerId = null;
@@ -242,9 +243,7 @@ class Customer extends CI_Controller
                 // $customerId = $duplicateCustomer->Customer_SlNo;
             } else {
                 $customer["AddBy"] = $this->session->userdata("FullName");
-                $customer["AddTime"] = date("Y-m-d H:i:s");
-                $customer["r_password"] = md5($customerObj->r_password);
-    
+                $customer["AddTime"] = date("Y-m-d H:i:s");   
                 $this->db->insert('tbl_customer', $customer);
                 $customerId = $this->db->insert_id();
             }
@@ -302,7 +301,6 @@ class Customer extends CI_Controller
             unset($customer["Customer_SlNo"]);
             $customer["Customer_brunchid"] = $this->session->userdata("BRANCHid");
             $customer["UpdateBy"] = $this->session->userdata("FullName");
-            $customer["r_password"] = md5($customerObj->r_password);
             $customer["UpdateTime"] = date("Y-m-d H:i:s");
 
             $this->db->where('Customer_SlNo', $customerId)->update('tbl_customer', $customer);

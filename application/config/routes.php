@@ -94,6 +94,8 @@ $route['stockAvailable'] = 'Administrator/Products/stockAvailable';
 $route['stockAvailablePrint'] = 'Administrator/Reports/stockAvailable';
 $route['productName']	=	'Administrator/Products/product_name';
 $route['get_products']	=	'Administrator/Products/getProducts';
+$route['get_sales_products']	=	'Administrator/Products/getSalesProducts';
+
 $route['get_product_stock']	=	'Administrator/Products/getProductStock';
 $route['get_current_stock']	=	'Administrator/Products/getCurrentStock';
 $route['get_total_stock']	=	'Administrator/Products/getTotalStock';
@@ -199,6 +201,8 @@ $route['check_purchase_return/(:any)'] = 'Administrator/Purchase/checkPurchaseRe
 $route['check_serial_number'] = 'Administrator/Products/checkProductSerial';
 $route['get_Serial_By_Prod'] = 'Administrator/Products/getSerialByProd';
 
+$route['GetIMEIList']          = 'Administrator/Sales/GetIMEIList';
+
 $route['damageEntry'] = 'Administrator/Purchase/damage_entry';
 $route['add_damage'] = 'Administrator/Purchase/addDamage';
 $route['update_damage'] = 'Administrator/Purchase/updateDamage';
@@ -298,10 +302,28 @@ $route['returnList'] = 'Administrator/Sales/return_list';
 $route['salesReturnRecord'] = 'Administrator/Sales/sales_return_record';
 $route['salesreturnlist'] = 'Administrator/Reports/salesreturnlist';
 
+
+
+// Cash Transfer 
+$route['cash_transfer']          = 'Administrator/Transfer/cashTransfer';
+$route['add_cash_transfer']      = 'Administrator/Transfer/addCashTransfer';
+$route['update_cash_transfer']   = 'Administrator/Transfer/updateCashTransfer';
+$route['delete_cash_transfer']   = 'Administrator/Transfer/deleteCashTransfer';
+$route['get_cash_transfers']     = 'Administrator/Transfer/getCashTransfer'; 
+$route['get_cash_transfer_received'] = 'Administrator/Transfer/getCashTransferReceived';  
+$route['cash_transfer_record']     = 'Administrator/Transfer/cashTransferRecord';
+$route['cash_transfer_received'] = 'Administrator/Transfer/cashTransferReceived';
+$route['get_cash_receives']      = 'Administrator/Transfer/getCashReceives';
+$route['cash_transfer_pending'] = 'Administrator/Transfer/cashTransferPending';
+// $route['get_cash_transfers_pending'] = 'Administrator/Transfer/getCashTransfersPending';
+$route['approve_cash_transfer'] = 'Administrator/Transfer/approveCashTransfer';    
+
+
 $route['profitLoss'] = 'Administrator/Sales/profitLoss';
 $route['profitLossSearch'] = 'Administrator/Sales/profitLossSearch';
 $route['get_profit_loss'] = 'Administrator/Sales/getProfitLoss';
 $route['profitLossPrint'] = 'Administrator/Reports/profitLossPrint';
+$route['get_profit_loss_by_product'] = 'Administrator/Sales/getProfitLossByProduct'; 
  
 $route['customerDue'] = 'Administrator/Customer/customer_due'; 
 $route['searchCustomerDue'] = 'Administrator/Customer/search_customer_due';
@@ -489,6 +511,8 @@ $route['get_transfers'] = 'Administrator/Transfer/getTransfers';
 $route['get_transfer_details'] = 'Administrator/Transfer/getTransferDetails';
 $route['received_list'] = 'Administrator/Transfer/receivedList';
 $route['get_receives'] = 'Administrator/Transfer/getReceives';
+$route['pending_list'] = 'Administrator/Transfer/pendingList';
+$route['approve_transfer'] = 'Administrator/Transfer/approveTransfer'; 
 $route['transfer_invoice/(:any)'] = 'Administrator/Transfer/transferInvoice/$1';
 
 // Banks

@@ -1,20 +1,24 @@
 <style>
-    .record-table{
-		width: 100%;
-		border-collapse: collapse;
-	}
-	.record-table thead{
-		background-color: #0097df;
-		color:white;
-	}
-	.record-table th, .record-table td{
-		padding: 3px;
-		border: 1px solid #454545;
-        text-align: center;
-	}
-    .record-table th{
-        text-align: center;
-    }
+.record-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.record-table thead {
+    background-color: #0097df;
+    color: white;
+}
+
+.record-table th,
+.record-table td {
+    padding: 3px;
+    border: 1px solid #454545;
+    text-align: center;
+}
+
+.record-table th {
+    text-align: center;
+}
 </style>
 <div id="invoices">
     <div class="col-md-8 col-md-offset-2">
@@ -50,7 +54,7 @@
                             <tr>
                                 <td>Sl.</td>
                                 <td>Product Name</td>
-                                <td>Model</td>
+                                <!-- <td>Model</td> -->
                                 <td>IMEI</td>
                                 <td>Quantity</td>
                                 <td>Status</td>
@@ -60,7 +64,7 @@
                             <tr v-for="(product, sl) in cart">
                                 <td>{{ sl + 1 }}</td>
                                 <td>{{ product.product_name }}</td>
-                                <td>{{ product.model }}</td>
+                                <!-- <td>{{ product.model }}</td> -->
                                 <td>{{ product.imei }}</td>
                                 <td>{{ product.quantity }}</td>
                                 <td>
@@ -118,7 +122,7 @@
                     </table>
                 </div>
             </div>
-    
+
             <div class="row" style="margin-top: 15px;">
                 <div class="col-xs-12">
                     <strong>Note: </strong>
@@ -134,28 +138,30 @@
 <script src="<?php echo base_url();?>assets/js/moment.min.js"></script>
 
 <script>
-    const app = new Vue({
-        el: '#invoices',
-        data: {
-            invoice: '<?php echo $invoice?>',
-            service: {},
-            cart: [],
-            expenses: []
-        },
-        async created() {
-            await this.getServices();
-        },
-        methods: {
-            async getServices() {
-                await axios.post('/get_service', { invoice: this.invoice })
+const app = new Vue({
+    el: '#invoices',
+    data: {
+        invoice: '<?php echo $invoice?>',
+        service: {},
+        cart: [],
+        expenses: []
+    },
+    async created() {
+        await this.getServices();
+    },
+    methods: {
+        async getServices() {
+            await axios.post('/get_service', {
+                    invoice: this.invoice
+                })
                 .then(res => {
                     this.service = res.data.services[0];
                     this.cart = res.data.serviceDetails;
                     this.expenses = res.data.expenseDetails;
                 })
-            },
-            async print(){
-                let reportContent = `
+        },
+        async print() {
+            let reportContent = `
 					<div class="container">
 						<div class="row">
 							<div class="col-xs-12">
@@ -180,12 +186,12 @@
 					</div>
 				`;
 
-				var reportWindow = window.open('', 'PRINT', `height=${screen.height}, width=${screen.width}`);
-				reportWindow.document.write(`
+            var reportWindow = window.open('', 'PRINT', `height=${screen.height}, width=${screen.width}`);
+            reportWindow.document.write(`
 					<?php $this->load->view('Administrator/reports/reportHeader.php');?>
 				`);
 
-				reportWindow.document.head.innerHTML += `
+            reportWindow.document.head.innerHTML += `
 					<style>
 						.record-table{
 							width: 100%;
@@ -205,14 +211,14 @@
 						}
 					</style>
 				`;
-				reportWindow.document.body.innerHTML += reportContent;
-			
+            reportWindow.document.body.innerHTML += reportContent;
 
-				reportWindow.focus();
-				await new Promise(resolve => setTimeout(resolve, 1000));
-				reportWindow.print();
-				reportWindow.close();
-			}
+
+            reportWindow.focus();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            reportWindow.print();
+            reportWindow.close();
         }
-    })
+    }
+})
 </script>

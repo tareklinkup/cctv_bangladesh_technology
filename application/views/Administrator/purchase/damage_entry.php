@@ -1,34 +1,42 @@
 <style>
-    .v-select{
-		margin-bottom: 5px;
-	}
-	.v-select.open .dropdown-toggle{
-		border-bottom: 1px solid #ccc;
-	}
-	.v-select .dropdown-toggle{
-		padding: 0px;
-		height: 25px;
-	}
-	.v-select input[type=search], .v-select input[type=search]:focus{
-		margin: 0px;
-	}
-	.v-select .vs__selected-options{
-		overflow: hidden;
-		flex-wrap:nowrap;
-	}
-	.v-select .selected-tag{
-		margin: 2px 0px;
-		white-space: nowrap;
-		position:absolute;
-		left: 0px;
-	}
-	.v-select .vs__actions{
-		margin-top:-5px;
-	}
-	.v-select .dropdown-menu{
-		width: auto;
-		overflow-y:auto;
-	}
+.v-select {
+    margin-bottom: 5px;
+}
+
+.v-select.open .dropdown-toggle {
+    border-bottom: 1px solid #ccc;
+}
+
+.v-select .dropdown-toggle {
+    padding: 0px;
+    height: 25px;
+}
+
+.v-select input[type=search],
+.v-select input[type=search]:focus {
+    margin: 0px;
+}
+
+.v-select .vs__selected-options {
+    overflow: hidden;
+    flex-wrap: nowrap;
+}
+
+.v-select .selected-tag {
+    margin: 2px 0px;
+    white-space: nowrap;
+    position: absolute;
+    left: 0px;
+}
+
+.v-select .vs__actions {
+    margin-top: -5px;
+}
+
+.v-select .dropdown-menu {
+    width: auto;
+    overflow-y: auto;
+}
 </style>
 <div id="damages">
     <div class="row" style="margin-top: 15px;">
@@ -38,7 +46,8 @@
                     <label class="col-sm-6 control-label no-padding-right"> Code </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <input type="text" placeholder="Code" class="form-control" v-model="damage.Damage_InvoiceNo" required readonly/>
+                        <input type="text" placeholder="Code" class="form-control" v-model="damage.Damage_InvoiceNo"
+                            required readonly />
                     </div>
                 </div>
 
@@ -46,47 +55,66 @@
                     <label class="col-sm-6 control-label no-padding-right"> Date </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <input type="date" placeholder="Date" class="form-control" v-model="damage.Damage_Date" required/>
+                        <input type="date" placeholder="Date" class="form-control" v-model="damage.Damage_Date"
+                            required />
                     </div>
-				</div>
-				
+                </div>
+
                 <div class="form-group">
                     <label class="col-sm-6 control-label no-padding-right"> Product </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-						<v-select v-bind:options="products" label="display_text" v-model="selectedProduct" placeholder="Select Product" v-on:input="productOnChange"></v-select>
+                        <v-select v-bind:options="products" label="display_text" v-model="selectedProduct"
+                            placeholder="Select Product" v-on:input="productOnChange"></v-select>
                     </div>
-				</div>
-				
-				<div class="form-group">
+                </div>
+
+                <div class="form-group" style="display: none;" :style="{display: serials.length > 0 ? '' : 'none'}">
+                    <label class="col-sm-6 control-label no-padding-right"> Serial </label>
+                    <label class="col-sm-1 control-label no-padding-right">:</label>
+
+                    <div class="col-sm-5">
+                        <v-select v-bind:options="serials" v-model="serial" label="ps_serial_number"
+                            v-bind:disabled="damage.Damage_SlNo != 0 ? true : false">
+                        </v-select>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
                     <label class="col-sm-6 control-label no-padding-right"> Damage Quantity </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <input type="number" placeholder="Quantity" class="form-control" v-model="damage.DamageDetails_DamageQuantity" required v-on:input="calculateTotal"/>
+                        <input type="text" placeholder="Quantity" class="form-control"
+                            v-model="damage.DamageDetails_DamageQuantity" required v-on:input="calculateTotal"
+                            v-bind:disabled="serials.length ? true : false" />
                     </div>
-				</div>
+                </div>
 
                 <div class="form-group">
                     <label class="col-sm-6 control-label no-padding-right"> Damage Rate </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <input type="number" placeholder="Rate" class="form-control" v-model="damage.damage_rate" required v-on:input="calculateTotal"/>
+                        <input type="number" placeholder="Rate" step="0.01" min="0.01" class="form-control"
+                            v-model="damage.damage_rate" required v-on:input="calculateTotal" />
                     </div>
                 </div>
 
-				<div class="form-group">
+                <div class="form-group">
                     <label class="col-sm-6 control-label no-padding-right"> Damage Amount </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <input type="number" placeholder="Amount" class="form-control" v-model="damage.damage_amount" required disabled />
+                        <input type="number" placeholder="Amount" class="form-control" v-model="damage.damage_amount"
+                            required disabled />
                     </div>
-				</div>
+                </div>
 
                 <div class="form-group">
                     <label class="col-sm-6 control-label no-padding-right"> Description </label>
                     <label class="col-sm-1 control-label no-padding-right">:</label>
                     <div class="col-sm-5">
-                        <textarea class="form-control" placeholder="Description" v-model="damage.Damage_Description"></textarea>
+                        <textarea class="form-control" placeholder="Description"
+                            v-model="damage.Damage_Description"></textarea>
                     </div>
                 </div>
 
@@ -103,7 +131,8 @@
             </form>
         </div>
         <div class="col-md-4">
-            <h1 style="display: none;" v-bind:style="{display: productStock !== '' ? '' : 'none'}">Stock : {{productStock}}</h1>
+            <h1 style="display: none;" v-bind:style="{display: productStock !== '' ? '' : 'none'}">Stock :
+                {{productStock}}</h1>
         </div>
     </div>
     <div class="row">
@@ -152,138 +181,215 @@
 <script src="<?php echo base_url();?>assets/js/moment.min.js"></script>
 
 <script>
-	Vue.component('v-select', VueSelect.VueSelect);
-    new Vue({
-        el: '#damages',
-        data(){
-            return {
-                damage: {
-                    Damage_SlNo: 0,
-                    Damage_InvoiceNo: '<?php echo $damageCode;?>',
-                    Damage_Date: moment().format('YYYY-MM-DD'),
-                    Damage_Description: '',
-					Product_SlNo: '',
-					DamageDetails_DamageQuantity: '',
-					damage_rate: '',
-                    damage_amount: 0,
-                },
-				products: [],
-				selectedProduct: null,
-                productStock : '',
-                damages: [],
+Vue.component('v-select', VueSelect.VueSelect);
+new Vue({
+    el: '#damages',
+    data() {
+        return {
+            damage: {
+                Damage_SlNo: 0,
+                Damage_InvoiceNo: '<?php echo $damageCode;?>',
+                Damage_Date: moment().format('YYYY-MM-DD'),
+                Damage_Description: '',
+                Product_SlNo: '',
+                DamageDetails_DamageQuantity: 1,
+                damage_rate: '',
+                damage_amount: 0,
+                imei: '',
+                ps_id: null,
+            },
+            products: [],
+            serials: [],
+            serial: null,
+            selectedProduct: {
+                Product_SlNo: '',
+                Product_Name: '',
+                display_text: 'selected Product'
+            },
+            productStock: '',
+            damages: [],
 
-				columns: [
-                    { label: 'Code', field: 'Damage_InvoiceNo', align: 'center', filterable: false },
-                    { label: 'Date', field: 'Damage_Date', align: 'center' },
-                    { label: 'Product Code', field: 'Product_Code', align: 'center' },
-                    { label: 'Product Name', field: 'Product_Name', align: 'center' },
-                    { label: 'Quantity', field: 'DamageDetails_DamageQuantity', align: 'center' },
-                    { label: 'Damage Rate', field: 'damage_rate', align: 'center' },
-                    { label: 'Damage Amount', field: 'damage_amount', align: 'center' },
-                    { label: 'Description', field: 'Damage_Description', align: 'center' },
-                    { label: 'Action', align: 'center', filterable: false }
-                ],
-                page: 1,
-                per_page: 10,
-                filter: ''
+            columns: [{
+                    label: 'Code',
+                    field: 'Damage_InvoiceNo',
+                    align: 'center',
+                    filterable: false
+                },
+                {
+                    label: 'Date',
+                    field: 'Damage_Date',
+                    align: 'center'
+                },
+                {
+                    label: 'Product Code',
+                    field: 'Product_Code',
+                    align: 'center'
+                },
+                {
+                    label: 'Product Name',
+                    field: 'Product_Name',
+                    align: 'center'
+                },
+                {
+                    label: 'Quantity',
+                    field: 'DamageDetails_DamageQuantity',
+                    align: 'center'
+                },
+                {
+                    label: 'Damage Rate',
+                    field: 'damage_rate',
+                    align: 'center'
+                },
+                {
+                    label: 'Damage Amount',
+                    field: 'damage_amount',
+                    align: 'center'
+                },
+                {
+                    label: 'Description',
+                    field: 'Damage_Description',
+                    align: 'center'
+                },
+                {
+                    label: 'Action',
+                    align: 'center',
+                    filterable: false
+                }
+            ],
+            page: 1,
+            per_page: 10,
+            filter: ''
+        }
+    },
+    created() {
+        this.getProducts();
+        this.getDamages();
+    },
+    methods: {
+        async productOnChange() {
+
+
+
+            console.log(this.selectedProduct.is_serial);
+
+            if ((this.selectedProduct.Product_SlNo != '' || this.selectedProduct.Product_SlNo != 0)) {
+                this.damage.damage_rate = this.selectedProduct.Product_Purchase_Rate;
+
+                let damage_amount = parseFloat(this.damage.damage_rate) * parseFloat(this.damage
+                    .DamageDetails_DamageQuantity);
+                this.damage.damage_amount = isNaN(damage_amount) ? 0 : damage_amount;
+
+                this.productStock = await axios.post('/get_product_stock', {
+                    productId: this.selectedProduct.Product_SlNo
+                }).then(res => {
+                    return res.data;
+                })
+
+                await axios.post('/get_Serial_By_Prod', {
+                        prod_id: this.selectedProduct.Product_SlNo
+                    })
+                    .then(res => {
+                        this.serials = res.data;
+                    })
             }
         },
-        created(){
-            this.getProducts();
-            this.getDamages();
+        getProducts() {
+            axios.post('/get_products', {
+                isService: 'false'
+            }).then(res => {
+                this.products = res.data;
+            })
         },
-        methods: {
-            async productOnChange(){
-                if((this.selectedProduct.Product_SlNo != '' || this.selectedProduct.Product_SlNo != 0)){
-                    this.damage.damage_rate = this.selectedProduct.Product_Purchase_Rate;
+        addDamage() {
+            if (this.selectedProduct == null) {
+                alert('Select product');
+                return;
+            }
 
-                    let damage_amount = parseFloat(this.damage.damage_rate) * parseFloat(this.damage.DamageDetails_DamageQuantity);
-                    this.damage.damage_amount = isNaN(damage_amount) ? 0 : damage_amount;
+            if (this.damage.DamageDetails_DamageQuantity > this.productStock) {
+                alert('Stock unavailable');
+                return;
+            }
 
-                    this.productStock = await axios.post('/get_product_stock', {productId: this.selectedProduct.Product_SlNo}).then(res => {
-                        return res.data;
-                    })
+            this.damage.Product_SlNo = this.selectedProduct.Product_SlNo;
+            this.damage.imei = this.serial.ps_serial_number;
+            this.damage.ps_id = this.serial.ps_id;
+
+            let url = '/add_damage';
+            if (this.damage.Damage_SlNo != 0) {
+                url = '/update_damage'
+            }
+            axios.post(url, this.damage).then(res => {
+                let r = res.data;
+                alert(r.message);
+                if (r.success) {
+                    this.resetForm();
+                    this.damage.Damage_InvoiceNo = r.newCode;
+                    this.getDamages();
                 }
-            },
-            getProducts(){
-                axios.post('/get_products', {isService: 'false'}).then(res => {
-                    this.products = res.data;
-                })
-            },
-			addDamage(){
-				if(this.selectedProduct == null){
-					alert('Select product');
-					return;
-				}
+            })
+        },
 
-                if(this.damage.DamageDetails_DamageQuantity > this.productStock){
-                    alert('Stock unavailable');
-                    return;
+        editDamage(damage) {
+            let keys = Object.keys(this.damage);
+            keys.forEach(key => this.damage[key] = damage[key]);
+
+
+
+            this.selectedProduct = {
+                Product_SlNo: damage.Product_SlNo,
+                display_text: `${damage.Product_Name} - ${damage.Product_Code}`,
+                is_serial: damage.is_serial,
+                Product_Name: damage.Product_Name,
+            }
+
+            this.serial = {
+                ps_serial_number: damage.imei
+            }
+        },
+
+        calculateTotal() {
+            let damage_amount = parseFloat(this.damage.damage_rate) * parseFloat(this.damage
+                .DamageDetails_DamageQuantity);
+
+            this.damage.damage_amount = isNaN(damage_amount) ? 0 : damage_amount;
+        },
+
+        deleteDamage(damageId) {
+            let deleteConfirm = confirm('Are you sure?');
+            if (deleteConfirm == false) {
+                return;
+            }
+            axios.post('/delete_damage', {
+                damageId: damageId
+            }).then(res => {
+                let r = res.data;
+                alert(r.message);
+                if (r.success) {
+                    this.getDamages();
                 }
+            })
+        },
 
-				this.damage.Product_SlNo = this.selectedProduct.Product_SlNo;
+        getDamages() {
+            axios.get('/get_damages').then(res => {
+                this.damages = res.data;
+            })
+        },
 
-                let url = '/add_damage';
-                if(this.damage.Damage_SlNo != 0){
-                    url = '/update_damage'
-                }
-				axios.post(url, this.damage).then(res => {
-					let r = res.data;
-					alert(r.message);
-					if(r.success){
-						this.resetForm();
-						this.damage.Damage_InvoiceNo = r.newCode;
-                        this.getDamages();
-					}
-				})
-			},
+        resetForm() {
+            this.damage.Damage_SlNo = '';
+            this.damage.Damage_Description = '';
+            this.damage.Product_SlNo = '';
+            this.damage.DamageDetails_DamageQuantity = '';
+            this.damage.damage_rate = '';
+            this.damage.damage_amount = 0;
+            this.selectedProduct = null;
+            this.productStock = '';
+            this.imei = '';
+            this.serial = null;
 
-            editDamage(damage){
-                let keys = Object.keys(this.damage);
-                keys.forEach(key => this.damage[key] = damage[key]);
-
-                this.selectedProduct = {
-                    Product_SlNo: damage.Product_SlNo,
-                    display_text: `${damage.Product_Name} - ${damage.Product_Code}`
-                }
-            },
-
-            calculateTotal(){
-                let damage_amount = parseFloat(this.damage.damage_rate) * parseFloat(this.damage.DamageDetails_DamageQuantity);
-
-                this.damage.damage_amount = isNaN(damage_amount) ? 0 : damage_amount;
-            },
-
-            deleteDamage(damageId){
-                let deleteConfirm = confirm('Are you sure?');
-                if(deleteConfirm == false){
-                    return;
-                }
-                axios.post('/delete_damage', {damageId: damageId}).then(res => {
-					let r = res.data;
-					alert(r.message);
-					if(r.success){
-                        this.getDamages();
-					}
-				})
-            },
-
-            getDamages(){
-                axios.get('/get_damages').then(res => {
-                    this.damages = res.data;
-                })
-            },
-
-			resetForm(){
-				this.damage.Damage_SlNo = '';
-				this.damage.Damage_Description = '';
-				this.damage.Product_SlNo = '';
-				this.damage.DamageDetails_DamageQuantity = '';
-				this.damage.damage_rate = '';
-                this.damage.damage_amount = 0;
-				this.selectedProduct = null;
-                this.productStock = '';
-			}
         }
-    })
+    }
+})
 </script>
