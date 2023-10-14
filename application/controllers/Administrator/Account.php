@@ -589,7 +589,8 @@ class Account extends CI_Controller {
         $this->load->view('Administrator/account/expense_search_list', $datas);
     }
 
-    function getOtherIncomeExpense(){
+    function getOtherIncomeExpense()
+    {
         $data = json_decode($this->input->raw_input_stream);
 
         $transactionDateClause = "";
@@ -600,7 +601,9 @@ class Account extends CI_Controller {
         $damageClause = "";
         $returnClause = "";
         $repairClause = "";
-        if(isset($data->dateFrom) && $data->dateFrom != '' && isset($data->dateTo) && $data->dateTo != ''){
+        
+        if(isset($data->dateFrom) && $data->dateFrom != '' && isset($data->dateTo) && $data->dateTo != '')
+        {
             $transactionDateClause = " and ct.Tr_date between '$data->dateFrom' and '$data->dateTo'";
             $employePaymentDateClause = " and ep.payment_date between '$data->dateFrom' and '$data->dateTo'";
             $profitDistributeDateClause = " and it.transaction_date between '$data->dateFrom' and '$data->dateTo'";

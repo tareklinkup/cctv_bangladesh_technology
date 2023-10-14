@@ -608,6 +608,7 @@ class Sales extends CI_Controller {
             }, $saleDetails);
 
             $res['saleDetails'] = $saleDetails;
+            
         }
         $sales = $this->db->query("
             select 
@@ -900,6 +901,7 @@ class Sales extends CI_Controller {
                 );
                 
                 $this->db->insert('tbl_salereturndetails', $returnDetails);
+               $salReturnDetailsId =  $this->db->insert_id();
 
                 if (isset($product->serials)) {
                     $serials = $product->serials;
@@ -909,6 +911,7 @@ class Sales extends CI_Controller {
                                 $product_serial = array(
                                     'ps_s_r_status'=> 'yes',
                                     'ps_s_status'=> 'no',
+                                    'sale_return_details_id' => $salReturnDetailsId,
                                     'ps_s_r_amount'=> $product->return_amount
                                 );
                                 $this->db->where('ps_serial_number', $serial->ps_serial_number);
@@ -1137,6 +1140,11 @@ class Sales extends CI_Controller {
                 join tbl_product p on p.Product_SlNo = srd.SaleReturnDetailsProduct_SlNo
                 where srd.SaleReturn_IdNo = ?
             ", $data->id)->result();
+
+              $res['returnDetails'] = array_map(function ($saleDetail) {
+                $saleDetail->serial = $this->db->query("SELECT * FROM tbl_product_serial_numbers WHERE sale_return_details_id=? GROUP BY ps_serial_number", $saleDetail->SaleReturnDetails_SlNo)->result();
+                return $saleDetail;
+            }, $res['returnDetails']);
         }
 
         $res['returns'] = $this->db->query("
