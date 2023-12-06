@@ -1,22 +1,22 @@
 <style>
-    #invoiceTable {
-        width: 100%;
-        border-collapse: collapse;
-    }
+#invoiceTable {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-    #invoiceTable th,
-    #invoiceTable td {
-        padding: 3px;
-        border: 1px solid #ccc;
-    }
+#invoiceTable th,
+#invoiceTable td {
+    padding: 3px;
+    border: 1px solid #ccc;
+}
 
-    #invoiceTable th {
-        text-align: center;
-    }
+#invoiceTable th {
+    text-align: center;
+}
 
-    #invoiceTable thead {
-        background-color: #edede7;
-    }
+#invoiceTable thead {
+    background-color: #edede7;
+}
 </style>
 
 <div id="transferInvoice">
@@ -29,7 +29,8 @@
         <div class="col-xs-8 col-xs-offset-2" id="invoiceContent">
             <div class="row">
                 <div class="col-xs-12 text-center">
-                    <div style="background-color:#ebebeb;padding:3px 15px;font-size:16px;font-weight:bold;">Transfer Invoice</div>
+                    <div style="background-color:#ebebeb;padding:3px 15px;font-size:16px;font-weight:bold;">Transfer
+                        Invoice</div>
                 </div>
             </div>
 
@@ -60,15 +61,27 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- <?php 
+                                echo "<pre>";
+                                    print_r($transferDetails);
+                                echo "<pre/>";
+                            ?> -->
                             <?php foreach ($transferDetails as $key => $product) { ?>
-                                <tr>
-                                    <td style="text-align:right;"><?php echo $key + 1; ?></td>
-                                    <td><?php echo $product->ProductCategory_Name; ?></td>
-                                    <td><?php echo $product->Product_Code; ?></td>
-                                    <td><?php echo $product->Product_Name; ?></td>
-                                    <td style="text-align:right;"><?php echo $product->quantity; ?></td>
-                                    <td style="text-align:right;"><?php echo $product->total; ?></td>
-                                </tr>
+                            <tr>
+                                <td style="text-align:right;"><?php echo $key + 1; ?></td>
+                                <td><?php echo $product->ProductCategory_Name; ?></td>
+                                <td><?php echo $product->Product_Code; ?></td>
+                                <td>
+                                    <?php 
+                                        echo $product->Product_Name .' ';
+                                        foreach ($product->serial as $serial) {
+                                           echo $serial->ps_serial_number. ' ,';
+                                        }
+                                    ?>
+                                </td>
+                                <td style="text-align:right;"><?php echo $product->quantity; ?></td>
+                                <td style="text-align:right;"><?php echo $product->total; ?></td>
+                            </tr>
                             <?php }; ?>
                             <tr>
                                 <td colspan="5" style="text-align:right;">Total</td>
@@ -83,10 +96,10 @@
 </div>
 
 <script>
-    $('#printIcon').on('click', function(e) {
-        let invoiceContent = document.querySelector('#invoiceContent').innerHTML;
-        let printWindow = window.open('', 'PRINT', 'width=400,height=500');
-        printWindow.document.write(`
+$('#printIcon').on('click', function(e) {
+    let invoiceContent = document.querySelector('#invoiceContent').innerHTML;
+    let printWindow = window.open('', 'PRINT', 'width=400,height=500');
+    printWindow.document.write(`
             <html>
                 <head>
                     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
@@ -103,7 +116,7 @@
             </html>
         `);
 
-        let invoiceStyle = `
+    let invoiceStyle = `
             <style>
                 #invoiceTable {
                     width: 100%;
@@ -125,8 +138,8 @@
             </style>
         `;
 
-        printWindow.document.head.innerHTML += invoiceStyle;
+    printWindow.document.head.innerHTML += invoiceStyle;
 
-        printWindow.focus();
-    })
+    printWindow.focus();
+})
 </script>

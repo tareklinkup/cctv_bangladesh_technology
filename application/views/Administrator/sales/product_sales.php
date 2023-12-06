@@ -180,16 +180,16 @@
                         </div>
                         <div class="modal-body" style="overflow: hidden; height: 100%; margin: -8px -14px -44px;">
                             <slot name="body">
-                                <form @submit.prevent="imei_add_action">
-                                    <div class="form-group">
-                                        <div class="col-sm-12" style="display: flex;margin-bottom: 10px;">
-                                            <textarea autocomplete="off" ref="imeinumberadd" id="imei_number"
-                                                name="imei_number" v-model="get_imei_number" class="form-control"
-                                                placeholder="please Enter Serial Number" cols="30" rows="2"></textarea>
-                                            <input type="submit" class="btn btn-sm btn primary serialBtn" value="Add">
-                                        </div>
+                                <div class="form-group">
+                                    <div class="col-sm-12" style="display: flex;margin-bottom: 10px;">
+                                        <textarea @input="testing" autocomplete="off" ref="imeinumberadd"
+                                            id="imei_number" name="imei_number" v-model="get_imei_number"
+                                            class="form-control" placeholder="please Enter Serial Number" cols="30"
+                                            rows="2"></textarea>
+                                        <input type="submit" class="btn btn-sm btn primary serialBtn" value="Add"
+                                            @click="imei_add_action">
                                     </div>
-                                </form>
+                                </div>
                             </slot>
                             <table class="table">
                                 <thead>
@@ -962,7 +962,7 @@ new Vue({
                         return false;
                     } else {
 
-                        if (!imeiObj) {
+                        if (!imeiObj && imeiObj.length > 5) {
                             alert(output[index] + ' not valid IMEI Number')
                         } else {
 
@@ -1345,6 +1345,11 @@ new Vue({
                 }
                 this.sales.due = (parseFloat(this.sales.total) - parseFloat(this.sales.paid)).toFixed(2);
             }
+        },
+
+        testing() {
+            // alert("Hello Test...");
+            this.imei_add_action();
         },
         async saveSales() {
             if (this.selectedCustomer.Customer_SlNo == '') {

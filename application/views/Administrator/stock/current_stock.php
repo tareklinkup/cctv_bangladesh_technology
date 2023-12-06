@@ -450,7 +450,9 @@ new Vue({
                     prod_id: prod_id
                 })
                 .then((res) => {
-                    this.serials = res.data;
+                    this.serials = res.data.filter((e) => {
+                        return e.ps_dmg_status != 'yes'
+                    });
                 });
             this.serialShowModal();
         },

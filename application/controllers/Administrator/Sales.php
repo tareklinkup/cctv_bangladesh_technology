@@ -1120,7 +1120,9 @@ class Sales extends CI_Controller {
         
     }
 
-    public function getSaleReturns() {
+    public function getSaleReturns() 
+    {
+        
         $data = json_decode($this->input->raw_input_stream);
 
         $clauses = "";

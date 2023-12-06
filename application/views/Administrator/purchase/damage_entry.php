@@ -163,7 +163,7 @@
                                 <button type="button" class="button" @click="deleteDamage(row.Damage_SlNo)">
                                     <i class="fa fa-trash"></i>
                                 </button>
-                                <?php }?>
+                                <?php } ?>
                             </td>
                         </tr>
                     </template>
@@ -269,7 +269,6 @@ new Vue({
         async productOnChange() {
 
 
-
             console.log(this.selectedProduct.is_serial);
 
             if ((this.selectedProduct.Product_SlNo != '' || this.selectedProduct.Product_SlNo != 0)) {
@@ -289,7 +288,12 @@ new Vue({
                         prod_id: this.selectedProduct.Product_SlNo
                     })
                     .then(res => {
-                        this.serials = res.data;
+                        this.serials = res.data.filter((e) => {
+                            return e.ps_dmg_status != 'yes'
+                        });
+
+                        this.damage.DamageDetails_DamageQuantity = 1;
+                        this.damage.damage_amount = this.selectedProduct.Product_Purchase_Rate * 1;
                     })
             }
         },

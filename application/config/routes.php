@@ -201,6 +201,7 @@ $route['check_purchase_return/(:any)'] = 'Administrator/Purchase/checkPurchaseRe
 $route['check_serial_number'] = 'Administrator/Products/checkProductSerial';
 $route['get_Serial_By_Prod'] = 'Administrator/Products/getSerialByProd';
 
+
 $route['GetIMEIList']          = 'Administrator/Sales/GetIMEIList';
 
 $route['damageEntry'] = 'Administrator/Purchase/damage_entry';
@@ -510,7 +511,8 @@ $route['transfer_list'] = 'Administrator/Transfer/transferList';
 $route['get_transfers'] = 'Administrator/Transfer/getTransfers';
 $route['get_transfer_details'] = 'Administrator/Transfer/getTransferDetails';
 $route['received_list'] = 'Administrator/Transfer/receivedList';
-$route['get_receives'] = 'Administrator/Transfer/getReceives';
+$route['get_receives'] = 'Administrator/Transfer/getReceives'; 
+$route['get_pending_list'] = 'Administrator/Transfer/getPendingList';  
 $route['pending_list'] = 'Administrator/Transfer/pendingList';
 $route['approve_transfer'] = 'Administrator/Transfer/approveTransfer'; 
 $route['transfer_invoice/(:any)'] = 'Administrator/Transfer/transferInvoice/$1';

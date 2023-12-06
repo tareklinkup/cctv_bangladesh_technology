@@ -8,9 +8,9 @@ $db['default'] = array(
 	'dsn'	=> '',
 	'hostname' => 'localhost',
 	
-  	'username' => 'root',
-  	'password' => '',
-  	'database' => 'cctv_bangladesh',
+     'username' => 'root',
+  	 'password' => '',
+  	 'database' => 'cctv_bangladesh',
 	
 		
 	'dbdriver' => 'mysqli',

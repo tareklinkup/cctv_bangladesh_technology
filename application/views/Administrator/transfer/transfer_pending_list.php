@@ -142,7 +142,7 @@ new Vue({
                 this.filter.branch = null;
             }
 
-            axios.post('/get_receives', this.filter).then(res => {
+            axios.post('/get_pending_list', this.filter).then(res => {
                 this.transfers = res.data.filter((p) => {
                     return p.status == 'p';
                 });

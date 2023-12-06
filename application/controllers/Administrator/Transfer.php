@@ -413,7 +413,36 @@
                 join tbl_brunch b on b.brunch_id = tm.transfer_from
                 join tbl_employee e on e.Employee_SlNo = tm.transfer_by
                 where tm.transfer_to = ? $branchClause $dateClause
-                and tm.status != 'd'
+                and tm.status = 'a'
+            ", $this->session->userdata('BRANCHid'))->result();
+
+            echo json_encode($transfers);
+        }
+
+        public function getPendingList ()
+        {
+             $data = json_decode($this->input->raw_input_stream);
+
+            $branchClause = "";
+            if($data->branch != null && $data->branch != ''){
+                $branchClause = " and tm.transfer_from = '$data->branch'";
+            }
+
+            $dateClause = "";
+            if(($data->dateFrom != null && $data->dateFrom != '') && ($data->dateTo != null && $data->dateTo != '')){
+                $dateClause = " and tm.transfer_date between '$data->dateFrom' and '$data->dateTo'";
+            }
+
+            $transfers = $this->db->query("
+                select
+                    tm.*,
+                    b.Brunch_name as transfer_from_name,
+                    e.Employee_Name as transfer_by_name
+                from tbl_transfermaster tm
+                join tbl_brunch b on b.brunch_id = tm.transfer_from
+                join tbl_employee e on e.Employee_SlNo = tm.transfer_by
+                where tm.transfer_to = ? $branchClause $dateClause
+                and tm.status = 'p'
             ", $this->session->userdata('BRANCHid'))->result();
 
             echo json_encode($transfers);
@@ -444,6 +473,11 @@
                 join tbl_productcategory pc on pc.ProductCategory_SlNo = p.ProductCategory_ID
                 where td.transfer_id = ?
             ", $transferId)->result();
+
+             $data['transferDetails'] = array_map(function ($transferDetail) {
+                $transferDetail->serial = $this->db->query("SELECT * FROM tbl_product_serial_numbers WHERE ps_transferDetails_id = ? GROUP BY ps_serial_number", $transferDetail->transferdetails_id)->result();
+                return $transferDetail;
+            }, $data['transferDetails']);
 
             $data['content'] = $this->load->view('Administrator/transfer/transfer_invoice', $data, true);
             $this->load->view('Administrator/index', $data);

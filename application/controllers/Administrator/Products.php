@@ -867,7 +867,8 @@ class Products extends CI_Controller {
         
     }
 
-    public function getSerialByProd(){
+    public function getSerialByProd()
+    {
         $data = json_decode($this->input->raw_input_stream);
         // $prod_id = $data->prod_id;
 
@@ -889,6 +890,8 @@ class Products extends CI_Controller {
             AND (sl.ps_p_r_status <> 'yes'  OR sl.ps_s_r_status ='yes' OR sl.ps_dmg_status <> 'yes')
             $clauses
             ", $this->session->userdata("BRANCHid"))->result();
-        echo json_encode($serials);
+           echo json_encode($serials);
     }
+
+ 
 }

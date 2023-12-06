@@ -137,6 +137,7 @@ class Customer extends CI_Controller
     }
 
     public function addCustomerPayment(){
+        
         $res = ['success'=>false, 'message'=>''];
         try{
             $paymentObj = json_decode($this->input->raw_input_stream);
@@ -559,10 +560,10 @@ class Customer extends CI_Controller
         $this->load->view('Administrator/index', $data);
     }
 
-    function getCustomerLedger(){
+    function getCustomerLedger()
+    {
         $data = json_decode($this->input->raw_input_stream);
         $previousDueQuery = $this->db->query("select ifnull(previous_due, 0.00) as previous_due from tbl_customer where Customer_SlNo = '$data->customerId'")->row();
-        
         $payments = $this->db->query("
             select 
                 'a' as sequence,
@@ -571,6 +572,7 @@ class Customer extends CI_Controller
                 concat('Sales ', sm.SaleMaster_InvoiceNo) as description,
                 sm.SaleMaster_TotalSaleAmount as bill,
                 sm.SaleMaster_PaidAmount as paid,
+                0.00 as customer_discount,
                 sm.SaleMaster_DueAmount as due,
                 0.00 as returned,
                 0.00 as paid_out,
@@ -593,6 +595,7 @@ class Customer extends CI_Controller
                 ) as description,
                 0.00 as bill,
                 cp.CPayment_amount as paid,
+                cp.discount as customer_discount,
                 0.00 as due,
                 0.00 as returned,
                 0.00 as paid_out,
@@ -616,6 +619,7 @@ class Customer extends CI_Controller
                 ) as description,
                 0.00 as bill,
                 0.00 as paid,
+                0.00 as customer_discount,
                 0.00 as due,
                 0.00 as returned,
                 cp.CPayment_amount as paid_out,
@@ -632,6 +636,7 @@ class Customer extends CI_Controller
                 sr.SaleReturn_SlNo as id,
                 sr.SaleReturn_ReturnDate as date,
                 'Sales return' as description,
+                0.00 as customer_discount,
                 0.00 as bill,
                 0.00 as paid,
                 0.00 as due,
@@ -641,7 +646,6 @@ class Customer extends CI_Controller
             from tbl_salereturn sr
             join tbl_salesmaster smr on smr.SaleMaster_InvoiceNo  = sr.SaleMaster_InvoiceNo
             where smr.SalseCustomer_IDNo = '$data->customerId'
-            
             order by date, sequence, id
         ")->result();
 
@@ -649,7 +653,7 @@ class Customer extends CI_Controller
 
         foreach($payments as $key=>$payment){
             $lastBalance = $key == 0 ? $previousDueQuery->previous_due : $payments[$key - 1]->balance;
-            $payment->balance = ($lastBalance + $payment->bill + $payment->paid_out) - ($payment->paid + $payment->returned);
+            $payment->balance = ($lastBalance + $payment->bill + $payment->paid_out) - ($payment->paid + $payment->returned + $payment->customer_discount);
         }
 
         if((isset($data->dateFrom) && $data->dateFrom != null) && (isset($data->dateTo) && $data->dateTo != null)){
