@@ -937,10 +937,10 @@ new Vue({
                 return false;
             } else {
 
-                if (this.get_imei_number.trim() == '') {
-                    alert("IMEI Number is Required.");
-                    return false;
-                }
+                /** if (this.get_imei_number.trim() == '') {
+                     alert("IMEI Number is Required.");
+                     return false;
+                 } **/
 
                 var lines = this.get_imei_number.split(/\n/);
                 var output = [];
@@ -1248,7 +1248,8 @@ new Vue({
                 return;
             }
 
-            if (this.selectedProduct.quantity == 0 || this.selectedProduct.quantity == '') {
+            if (this.selectedProduct.quantity == 0 || this.selectedProduct.quantity == '' || this
+                .selectedProduct.quantity == undefined) {
                 alert('Enter quantity');
                 return;
             }
@@ -1272,6 +1273,7 @@ new Vue({
                 SaleDetails_Discount: this.selectedProduct.discount,
                 SerialStore: this.selectedProduct.is_serial == 1 ? this.imei_cart : [],
             }
+
 
             let getCurrentInd = this.cart.findIndex((item) => {
                 return (item.productId == this.selectedProduct.Product_SlNo);

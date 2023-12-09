@@ -719,6 +719,7 @@ class Products extends CI_Controller {
     
     public function getProductLedger(){
         $data = json_decode($this->input->raw_input_stream);
+        // echo json_encode($data);
         $result = $this->db->query("
             select
                 'a' as sequence,
@@ -808,11 +809,11 @@ class Products extends CI_Controller {
                 0 as rate,
                 0 as in_quantity,
                 trd.quantity as out_quantity
-            from tbl_transferdetails trd
-            join tbl_transfermaster tm on tm.transfer_id = trd.transfer_id
-            join tbl_brunch b on b.brunch_id = tm.transfer_to
-            where trd.product_id = " . $data->productId . "
-            and tm.transfer_from = " . $this->brunch . "
+        from tbl_transferdetails trd
+        join tbl_transfermaster tm on tm.transfer_id = trd.transfer_id
+        join tbl_brunch b on b.brunch_id = tm.transfer_to
+        where trd.product_id = " . $data->productId . "
+        and tm.transfer_from = " . $this->brunch . "
             
             UNION
             select 
@@ -823,14 +824,14 @@ class Products extends CI_Controller {
                 0 as rate,
                 0 as in_quantity,
                 dmd.DamageDetails_DamageQuantity as out_quantity
-            from tbl_damagedetails dmd
-            join tbl_damage d on d.Damage_SlNo = dmd.Damage_SlNo
-            where dmd.Product_SlNo = " . $data->productId . "
-            and d.Damage_brunchid = " . $this->brunch . "
-
-            order by date, sequence, id
+                from tbl_damagedetails dmd
+                join tbl_damage d on d.Damage_SlNo = dmd.Damage_SlNo
+                where dmd.Product_SlNo = " . $data->productId . "
+                and d.Damage_brunchid = " . $this->brunch . "
+                order by date, sequence, id
         ")->result();
-
+        
+        //  echo json_encode($result);
         $ledger = array_map(function($key, $row) use ($result){
             $row->stock = $key == 0 ? $row->in_quantity - $row->out_quantity : ($result[$key - 1]->stock + ($row->in_quantity - $row->out_quantity));
             return $row;
@@ -840,6 +841,7 @@ class Products extends CI_Controller {
             return $row->date < $data->dateFrom;
         });
 
+
         $previousStock = empty($previousRows) ? 0 : end($previousRows)->stock;
 
         $ledger = array_filter($ledger, function($row) use ($data){
@@ -847,7 +849,6 @@ class Products extends CI_Controller {
         });
 
         echo json_encode(['ledger' => $ledger, 'previousStock' => $previousStock]);
-
     }
 
 
